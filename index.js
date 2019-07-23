@@ -1,36 +1,44 @@
 var express = require('express')
-var heroes = require('./heroes.json')
 var bodyParser = require('body-parser')
+var models = require('./models')
 
 var app = express()
 
 app.get('/heroes', (request, response) => {
-  response.send(heroes)
+  models.Heroes.findAll({ include: { model: models.Teams } }).then((heroes) => {
+    response.send(heroes)
+  })
 })
 
 app.get('/heroes/:slug', (request, response) => {
-  var matchingHeroes = heroes.filter((item) => {
-    return item.slug === request.params.slug
+  models.Heroes.findOne({
+    where: { slug: request.params.slug },
+    include: { model: models.Teams }
+  }).then((hero) => {
+    if (hero) {
+      response.send(hero)
+    } else {
+      response.sendStatus(404)
+    }
   })
-
-  if (matchingHeroes.length) {
-    response.send(matchingHeroes)
-  } else {
-    response.sendStatus(404)
-  }
 })
 
 app.post('/heroes', bodyParser.json(), (request, response) => {
-  const { name, realname, firstappearance, slug } = request.body
+  const { name, realname, firstappearance, slug, teamSlug } = request.body
 
-  if (!name || !realname || !firstappearance || !slug) {
-    response.status(400).send('The following attributes are required: name, realname, firstappearance, slug')
+  if (!name || !realname || !firstappearance || !slug || !teamSlug) {
+    response.status(400).send('The following attributes are required: name, realname, firstappearance, slug, teamSlug')
   }
 
-  const newHero = { name, realname, firstappearance, slug }
-
-  heroes.push(newHero)
-  response.status(201).send(newHero)
+  models.Teams.findOne({ where: { slug: teamSlug } }).then((team) => {
+    if (!team) {
+      response.status(400).send(`Unknown team slug: ${teamSlug}`)
+    } else {
+      models.Heroes.create({ name, realName, firstAppearance, slug, teamId: team.id }).then((newHero) => {
+        response.status(201).send(newHero)
+      })
+    }
+  })
 })
 
 app.all('*', (request, response) => {

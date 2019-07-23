@@ -1,5 +1,6 @@
 var express = require('express')
 var heroes = require('./heroes.json')
+var bodyParser = require('body-parser')
 
 var app = express()
 
@@ -17,6 +18,19 @@ app.get('/heroes/:slug', (request, response) => {
   } else {
     response.sendStatus(404)
   }
+})
+
+app.post('/heroes', bodyParser.json(), (request, response) => {
+  const { name, realname, firstappearance, slug } = request.body
+
+  if (!name || !realname || !firstappearance || !slug) {
+    response.status(400).send('The following attributes are required: name, realname, firstappearance, slug')
+  }
+
+  const newHero = { name, realname, firstappearance, slug }
+
+  heroes.push(newHero)
+  response.status(201).send(newHero)
 })
 
 app.all('*', (request, response) => {

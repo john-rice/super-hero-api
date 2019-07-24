@@ -7,6 +7,7 @@ module.exports = (sequelize, Sequelize, Teams) => {
     realName: { type: Sequelize.STRING, },
     firstAppearance: { type: Sequelize.STRING, },
     slug: { type: Sequelize.STRING, },
+    dusted: { type: Sequelize.BOOLEAN, defaultValue: false },
     teamId: { type: Sequelize.INTEGER, reference: { model: Teams, key: 'id' } }
   })
 }
